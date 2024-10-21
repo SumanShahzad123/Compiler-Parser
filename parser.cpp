@@ -3,6 +3,7 @@
 #include <string>
 #include <cctype>
 #include <map>
+#include <fstream>
 
 using namespace std;
 
@@ -45,11 +46,11 @@ class Lexer {
             while (pos < src.size()) {
                 char current = src[pos];
                 
-                f (current == '\n') {  // give error on bases of the new line. New line handling
+                if (current == '\n') {  // give error on bases of the new line. New line handling
                 line++;
                 pos++;
                 continue;
-            }
+                }
                 if (isspace(current)) {
                     pos++;
                     continue;
@@ -141,6 +142,29 @@ private:
             exit(1);
         }
     }
+    string tokenTypeToString(TokenType type) {
+    switch (type) {
+        case T_ID: return "identifier";
+        case T_INT: return "int";
+        case T_NUM: return "number";
+        case T_IF: return "if";
+        case T_ELSE: return "else";
+        case T_RETURN: return "return";
+        case T_ASSIGN: return "assignment operator '='";
+        case T_PLUS: return "'+'";
+        case T_MINUS: return "'-'";
+        case T_MUL: return "'*'";
+        case T_DIV: return "'/'";
+        case T_LPAREN: return "'('";
+        case T_RPAREN: return "')'";
+        case T_LBRACE: return "'{'";
+        case T_RBRACE: return "'}'";
+        case T_SEMICOLON: return "semicolon ';'";
+        case T_GT: return "'>'";
+        case T_EOF: return "end of file";
+        default: return "unknown token";
+    }
+}
 
     void parseBlock() {
         expect(T_LBRACE);  
@@ -214,31 +238,39 @@ private:
     }
 
     void expect(TokenType type) {
-        if (tokens[pos].type == type) {
-            pos++;
-        } else {
-            cout << "Syntax error: expected " << type << " but found " << tokens[pos].value << endl;
-            exit(1);
-        }
+    if (tokens[pos].type == type) {
+        pos++;
+    } else {
+        cout << "Syntax error: expected " << tokenTypeToString(type)
+             << " but found '" << tokens[pos].value
+             << "' on line " << tokens[pos].line << endl;
+        exit(1);
     }
+}
+
 };
 
-int main() {
-    string input = R"(
-        int a;
-        a = 5;
-        int b;
-        b = a + 10;
-        if (b > 10) {
-            return b;
-        } else {
-            return 0;
-        }
-    )";
+int main(int argc, char* argv[]) {
+    if (argc < 2) {
+        cerr << argv[0] << "<filename.txt>" <<endl;
+        return 1;
+    }
+
+    ifstream file(argv[1]);
+    if (!file.is_open()) {
+        cerr << "Could not open the file: " << argv[1] << endl;
+        return 1;
+    }
+
+    string input((istreambuf_iterator<char>(file)), istreambuf_iterator<char>());
+    file.close();
+
 
     Lexer lexer(input);
     vector<Token> tokens = lexer.tokenize();
     
+    
+
     Parser parser(tokens);
     parser.parseProgram();
 
