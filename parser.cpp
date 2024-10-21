@@ -17,6 +17,7 @@ enum TokenType {
 struct Token {
     TokenType type;
     string value;
+    int line;
 };
 
 class Lexer {
@@ -24,6 +25,7 @@ class Lexer {
     private:
         string src;
         size_t pos;
+        int line;
         /*
         It hold positive values. 
         In C++, size_t is an unsigned integer data type used to represent the 
@@ -34,7 +36,8 @@ class Lexer {
     public:
         Lexer(const string &src) {
             this->src = src;  
-            this->pos = 0;    
+            this->pos = 0; 
+            this->line = 1;   
         }
 
         vector<Token> tokenize() {
@@ -42,41 +45,48 @@ class Lexer {
             while (pos < src.size()) {
                 char current = src[pos];
                 
+                f (current == '\n') {  // give error on bases of the new line. New line handling
+                line++;
+                pos++;
+                continue;
+            }
                 if (isspace(current)) {
                     pos++;
                     continue;
                 }
                 if (isdigit(current)) {
-                    tokens.push_back(Token{T_NUM, consumeNumber()});
+                    tokens.push_back(Token{T_NUM, consumeNumber(), line});
                     continue;
                 }
                 if (isalpha(current)) {
                     string word = consumeWord();
-                    if (word == "int") tokens.push_back(Token{T_INT, word});
-                    else if (word == "if") tokens.push_back(Token{T_IF, word});
-                    else if (word == "else") tokens.push_back(Token{T_ELSE, word});
-                    else if (word == "return") tokens.push_back(Token{T_RETURN, word});
-                    else tokens.push_back(Token{T_ID, word});
+                    if (word == "int") tokens.push_back(Token{T_INT, word, line});
+                    else if (word == "if") tokens.push_back(Token{T_IF, word, line});
+                    else if (word == "else") tokens.push_back(Token{T_ELSE, word, line});
+                    else if (word == "return") tokens.push_back(Token{T_RETURN, word, line});
+                    else tokens.push_back(Token{T_ID, word, line});
                     continue;
                 }
                 
                 switch (current) {
-                        case '=': tokens.push_back(Token{T_ASSIGN, "="}); break;
-                        case '+': tokens.push_back(Token{T_PLUS, "+"}); break;
-                        case '-': tokens.push_back(Token{T_MINUS, "-"}); break;
-                        case '*': tokens.push_back(Token{T_MUL, "*"}); break;
-                        case '/': tokens.push_back(Token{T_DIV, "/"}); break;
-                        case '(': tokens.push_back(Token{T_LPAREN, "("}); break;
-                        case ')': tokens.push_back(Token{T_RPAREN, ")"}); break;
-                        case '{': tokens.push_back(Token{T_LBRACE, "{"}); break;  
-                        case '}': tokens.push_back(Token{T_RBRACE, "}"}); break;  
-                        case ';': tokens.push_back(Token{T_SEMICOLON, ";"}); break;
-                        case '>': tokens.push_back(Token{T_GT, ">"}); break;
-                        default: cout << "Unexpected character: " << current << endl; exit(1);
+                        case '=': tokens.push_back(Token{T_ASSIGN, "=", line}); break;
+                        case '+': tokens.push_back(Token{T_PLUS, "+", line}); break;
+                        case '-': tokens.push_back(Token{T_MINUS, "-", line}); break;
+                        case '*': tokens.push_back(Token{T_MUL, "*", line}); break;
+                        case '/': tokens.push_back(Token{T_DIV, "/", line}); break;
+                        case '(': tokens.push_back(Token{T_LPAREN, "(", line}); break;
+                        case ')': tokens.push_back(Token{T_RPAREN, ")", line}); break;
+                        case '{': tokens.push_back(Token{T_LBRACE, "{", line}); break;  
+                        case '}': tokens.push_back(Token{T_RBRACE, "}", line}); break;  
+                        case ';': tokens.push_back(Token{T_SEMICOLON, ";", line}); break;
+                        case '>': tokens.push_back(Token{T_GT, ">", line}); break;
+                        default: 
+                        cout << "Unexpected character: " << current << " on line " << line << endl;
+                        exit(1);
                 }
                 pos++;
             }
-            tokens.push_back(Token{T_EOF, ""});
+            tokens.push_back(Token{T_EOF, "", line});
             return tokens;
         }
 
