@@ -571,21 +571,60 @@ public:
 
     void parseProgram() {
           while (tokens[pos].type != T_EOF) {
+            
         if (tokens[pos].type == T_INT || tokens[pos].type == T_FLOAT || tokens[pos].type == T_DOUBLE ||
             tokens[pos].type == T_BOOL || tokens[pos].type == T_CHAR || tokens[pos].type == T_STRING) {
             parseDeclaration();
-        } else {
+        } 
+        else if (tokens[pos].type == T_IF || tokens[pos].type == T_ELSE || tokens[pos].type == T_ELSEIF) {
+            parseConditionalBlock(); // Handle if, else if, and else blocks
+        }
+        else {
             //parseExpression();
             parseStatement();
             expect(T_SEMICOLON); // Ensure valid statements
         }
     }
+    /*if (tokens[pos].type == T_EOF) {
+        cout << "End of file reached. Parsing completed successfully! No syntax errors." << endl;
+    } else {
+        cout << "Unexpected token at the end of the file: " << tokens[pos].value << endl;
+        exit(1);
+    }*/
     cout << "Parsing completed successfully! No syntax errors." << endl;
     }
 
 //for bool literals true and false 
 
+void parseConditionalBlock() {
+    // Parse an 'if', 'else if', or 'else' block
+    expect(T_IF); // Expect an 'if' keyword
+    expect(T_LPAREN); // Expect '('
+    parseExpression(); // Parse the condition
+    expect(T_RPAREN); // Expect ')'
+    expect(T_LBRACE); // Expect '{'
 
+    // Parse the block content
+    while (tokens[pos].type != T_RBRACE && tokens[pos].type != T_EOF) {
+        parseStatement(); // Parse individual statements within the block
+    }
+
+    expect(T_RBRACE); // Ensure the block ends with '}'
+
+    // Handle 'else if' and 'else' blocks recursively
+    if (tokens[pos].type == T_ELSEIF) {
+        parseConditionalBlock(); // Handle 'else if'
+    } else if (tokens[pos].type == T_ELSE) {
+        expect(T_ELSE); // Expect 'else'
+        expect(T_LBRACE); // Expect '{'
+
+        while (tokens[pos].type != T_RBRACE && tokens[pos].type != T_EOF) {
+            parseStatement();
+        }
+
+        expect(T_RBRACE); // Ensure the 'else' block ends with '}'
+    }
+}
 
 };
 
